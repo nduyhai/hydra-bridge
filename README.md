@@ -27,6 +27,49 @@ A GitHub Hydra Brid repository for bootstrapping a new OAuth2.
 * User approves → Bridge calls Hydra Admin accept consent
 * Hydra returns code → client exchanges at /oauth2/token
 
+## Flow diagram
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Client
+  participant hydra as hydra
+  participant bridge as bridge
+  participant login_api as login-api
+  participant postgres as postgres
+  Note over hydra, postgres: hydra uses postgres for storage
+  Client ->> hydra: GET /oauth2/auth
+  hydra -->> Client: Set ory_hydra_login_csrf and ory_hydra_session cookies
+  hydra -->> Client: Redirect to bridge /login with login_challenge
+  Client ->> bridge: GET /login with login_challenge
+  bridge ->> hydra: GET Admin login request by login_challenge
+  hydra -->> bridge: Login request details client_id
+  bridge -->> Client: Render login page
+  Client ->> bridge: POST /login username password csrf
+  bridge ->> login_api: POST /login verify credentials
+  login_api -->> bridge: Auth success user_id name email
+  bridge -->> Client: Set cookie __bridge_user with claims short ttl
+  bridge ->> hydra: PUT Admin accept login subject user_id context claims
+  hydra -->> bridge: redirect_to
+  bridge -->> Client: Redirect to hydra
+  hydra -->> Client: Set ory_hydra_consent_csrf cookie
+  hydra -->> Client: Redirect to bridge /consent with consent_challenge
+  Client ->> bridge: GET /consent with consent_challenge
+  bridge ->> hydra: GET Admin consent request by consent_challenge
+  hydra -->> bridge: Consent request requested scopes client_id
+  bridge -->> Client: Read __bridge_user and render consent page with name email
+  Client ->> bridge: POST /consent approve csrf
+  bridge ->> hydra: PUT Admin accept consent grant scopes
+  Note over bridge, hydra: Inject claims into id_token and access_token via session fields
+  hydra -->> bridge: redirect_to
+  bridge -->> Client: Delete __bridge_user and redirect to hydra
+  hydra -->> Client: Redirect to redirect_uri with authorization code
+  Client ->> hydra: POST /oauth2/token with code
+  hydra -->> Client: access_token id_token refresh_token
+
+
+```
+
 ## Run it
 
 ```bash
