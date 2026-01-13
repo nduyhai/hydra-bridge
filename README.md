@@ -33,36 +33,47 @@ A GitHub Hydra Brid repository for bootstrapping a new OAuth2.
 docker compose up -d
 ```
 
-Create a Hydra OAuth2 client (example):
+Create a client (example):
 
 ```bash
-docker compose exec hydra hydra clients create \
-  --endpoint http://hydra:4445 \
-  --id my-client \
-  --secret secret \
-  --grant-types authorization_code,refresh_token \
-  --response-types code \
-  --scope openid,offline_access,profile,email \
-  --callbacks http://localhost:5555/callback
-
-```
-Or using HTTP Client
-```bash
-curl -sS -X POST 'http://localhost:4445/admin/clients' \
-  -H 'Content-Type: application/json' \
+curl -sS -i -X POST http://localhost:4445/clients \
+  -H "Content-Type: application/json" \
   -d '{
-    "client_id": "my-client",
-    "client_secret": "secret",
+    "client_id": "demo-client",
+    "client_secret": "demo-secret",
     "grant_types": ["authorization_code","refresh_token"],
     "response_types": ["code"],
-    "scope": "openid offline_access profile email",
+    "scope": "openid profile email offline_access",
     "redirect_uris": ["http://localhost:5555/callback"],
     "token_endpoint_auth_method": "client_secret_basic"
   }'
 
+
+```
+
+Verify the client exists
+
+```bash
+curl -sS -i http://localhost:4445/clients/demo-client
+
 ```
 
 Demo login credentials (from mock API):
+
+```bash
+curl -X POST http://localhost:8090/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"hai","password":"123"}'
+```
+
+## Browser test
+
+```bash
+http://localhost:4444/oauth2/auth?response_type=code&client_id=demo-client&redirect_uri=http://localhost:5555/callback&scope=openid%20profile%20email&state=thelongnightstage
+
+```
+
+Then login with UI
 
 ```bash
 username: hai

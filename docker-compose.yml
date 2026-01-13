@@ -33,9 +33,8 @@ services:
 
       # Public issuer URL (what clients see)
       URLS_SELF_ISSUER: http://localhost:4444
+      URLS_SELF_PUBLIC: http://localhost:4444
 
-      # Hydra public/admin URLs (internal)
-      URLS_SELF_PUBLIC: http://hydra:4444
       URLS_SELF_ADMIN: http://hydra:4445
 
       # Where Hydra redirects the browser for login/consent
