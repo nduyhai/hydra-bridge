@@ -8,19 +8,10 @@
 </p>
 {{end}}
 
-<small>App: {{.ClientName}} ({{.ClientID}})</small>
-
-<p>This app requests access to:</p>
-<ul>
-    {{range .RequestedScope}}
-    <li>{{.}}</li>
-    {{end}}
-</ul>
-
-<form method="post" action="/consent?consent_challenge={{.ConsentChallenge}}">
-    <input type="hidden" name="csrf" value="{{.CSRF}}"/>
-    <button type="submit">Approve</button>
+<form method="post" action="/consent">
+    <input type="hidden" name="consent_challenge" value="{{.ConsentChallenge}}">
+    <input type="hidden" name="csrf" value="{{.CSRF}}">
+    <button type="submit">Allow</button>
 </form>
-{{end}}
 
-{{template "layout" .}}
+{{end}}

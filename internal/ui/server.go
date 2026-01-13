@@ -26,15 +26,24 @@ type Config struct {
 }
 
 type Server struct {
-	cfg  Config
-	hyd  *hydra.AdminClient
-	reg  *plugins.Registry
-	tmpl *template.Template
+	cfg         Config
+	hyd         *hydra.AdminClient
+	reg         *plugins.Registry
+	tmplLogin   *template.Template
+	tmplConsent *template.Template
 }
 
 func NewServer(cfg Config, hyd *hydra.AdminClient, reg *plugins.Registry) *Server {
-	tmpl := template.Must(template.ParseGlob(cfg.TemplatesDir + "/*.html"))
-	return &Server{cfg: cfg, hyd: hyd, reg: reg, tmpl: tmpl}
+	tmplLogin := template.Must(template.ParseFiles(
+		"/app/web/templates/layout.html",
+		"/app/web/templates/login.html",
+	))
+
+	tmplConsent := template.Must(template.ParseFiles(
+		"/app/web/templates/layout.html",
+		"/app/web/templates/consent.html",
+	))
+	return &Server{cfg: cfg, hyd: hyd, reg: reg, tmplConsent: tmplConsent, tmplLogin: tmplLogin}
 }
 
 func (s *Server) Routes() http.Handler {
@@ -42,6 +51,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("/login", s.handleLogin)
 	mux.HandleFunc("/consent", s.handleConsent)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
+	mux.HandleFunc("/success", s.handleSuccess)
 	return mux
 }
 

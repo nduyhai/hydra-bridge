@@ -44,7 +44,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 			Provider:       provider,
 			CSRF:           csrfToken(s.cfg.CookieAuth, ch),
 		}
-		_ = s.tmpl.ExecuteTemplate(w, "login.html", data)
+		if err := s.tmplLogin.ExecuteTemplate(w, "layout", data); err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
 
 	case http.MethodPost:
 		if err := r.ParseForm(); err != nil {
@@ -84,7 +87,10 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 				Error:          "Invalid credentials",
 			}
 			w.WriteHeader(http.StatusUnauthorized)
-			_ = s.tmpl.ExecuteTemplate(w, "login.html", data)
+			if err := s.tmplLogin.ExecuteTemplate(w, "layout", data); err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
 			return
 		}
 

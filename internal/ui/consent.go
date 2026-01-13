@@ -20,14 +20,22 @@ type consentPageData struct {
 }
 
 func (s *Server) handleConsent(w http.ResponseWriter, r *http.Request) {
+	// Challenge comes from query on GET, from form on POST
 	ch := r.URL.Query().Get("consent_challenge")
+	if r.Method == http.MethodPost {
+		_ = r.ParseForm()
+		if ch == "" {
+			ch = r.Form.Get("consent_challenge")
+		}
+	}
+
 	if ch == "" {
 		http.Error(w, "missing consent_challenge", http.StatusBadRequest)
 		return
 	}
 
-	// Read user claims from a cookie (set after login)
-	userClaims := map[string]interface{}{}
+	// Read user claims from cookie (set after login)
+	userClaims := map[string]any{}
 	if c, err := r.Cookie(userInfoCookie); err == nil {
 		if raw, err := base64.RawURLEncoding.DecodeString(c.Value); err == nil {
 			_ = json.Unmarshal(raw, &userClaims)
@@ -51,13 +59,13 @@ func (s *Server) handleConsent(w http.ResponseWriter, r *http.Request) {
 			Email:            fmt.Sprint(userClaims["email"]),
 			CSRF:             csrfToken(s.cfg.CookieAuth, ch),
 		}
-		_ = s.tmpl.ExecuteTemplate(w, "consent.html", data)
 
-	case http.MethodPost:
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "bad form", 400)
+		if err := s.tmplConsent.ExecuteTemplate(w, "layout", data); err != nil {
+			http.Error(w, "template render error: "+err.Error(), 500)
 			return
 		}
+
+	case http.MethodPost:
 		if r.Form.Get("csrf") != csrfToken(s.cfg.CookieAuth, ch) {
 			http.Error(w, "csrf invalid", 403)
 			return
@@ -75,7 +83,7 @@ func (s *Server) handleConsent(w http.ResponseWriter, r *http.Request) {
 			Remember:    true,
 			RememberFor: 86400,
 			Session: hydra.ConsentSession{
-				IDToken:     userClaims,
+				IDToken:     userClaims, // add extra fields here
 				AccessToken: userClaims,
 			},
 		})
