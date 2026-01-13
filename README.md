@@ -35,7 +35,7 @@ sequenceDiagram
   participant Client
   participant hydra as hydra
   participant bridge as bridge
-  participant login_api as login-api
+  participant login_api as login-api (legacy)
   participant postgres as postgres
   Note over hydra, postgres: hydra uses postgres for storage
   Client ->> hydra: GET /oauth2/auth
