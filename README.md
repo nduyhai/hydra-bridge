@@ -61,8 +61,7 @@ curl -sS -i http://localhost:4445/clients/demo-client
 Demo login credentials (from mock API):
 
 ```bash
-curl -X POST http://localhost:8090/login \
-  -H "Content-Type: application/json" \
+curl -X POST http://localhost:8090/login \  -H "Content-Type: application/json" \
   -d '{"username":"hai","password":"123"}'
 ```
 
@@ -79,3 +78,4 @@ Then login with UI
 username: hai
 password: 123
 ```
+

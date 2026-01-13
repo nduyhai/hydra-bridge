@@ -12,6 +12,8 @@ import (
 	"github.com/nduyhai/hydra-bridge/internal/plugins"
 )
 
+const userInfoCookie = "__bridge_user"
+
 type Config struct {
 	Addr         string
 	HydraAdmin   string
@@ -50,4 +52,24 @@ func (s *Server) ctx(r *http.Request) (context.Context, context.CancelFunc) {
 func csrfToken(secret, challenge string) string {
 	h := sha256.Sum256([]byte(secret + ":" + challenge))
 	return base64.RawURLEncoding.EncodeToString(h[:])
+}
+
+func setShortCookie(w http.ResponseWriter, name, value string, maxAgeSec int) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		MaxAge:   maxAgeSec,
+	})
+}
+
+func deleteCookie(w http.ResponseWriter, name string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   name,
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	})
 }

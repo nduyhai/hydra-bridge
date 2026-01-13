@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"net/http"
 
 	"github.com/nduyhai/hydra-bridge/internal/hydra"
@@ -72,7 +74,6 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 			Password: r.Form.Get("password"),
 		})
 		if err != nil {
-			// Re-render with error
 			req, _ := s.hyd.GetLoginRequest(ch)
 			data := loginPageData{
 				LoginChallenge: ch,
@@ -86,6 +87,11 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 			_ = s.tmpl.ExecuteTemplate(w, "login.html", data)
 			return
 		}
+
+		// Save user claims for consent UI + token claims injection (short-lived)
+		claimsJSON, _ := json.Marshal(res.Claims)
+		claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
+		setShortCookie(w, userInfoCookie, claimsB64, 300) // 5 minutes
 
 		redir, err := s.hyd.AcceptLoginRequest(ch, hydra.AcceptLoginRequestBody{
 			Subject:     res.Subject, // becomes OIDC sub

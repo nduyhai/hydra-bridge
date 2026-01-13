@@ -1,5 +1,13 @@
 {{define "content"}}
 <h2>Consent</h2>
+
+{{if .Name}}
+<p>
+    Signed in as <strong>{{.Name}}</strong><br/>
+    <small class="muted">{{.Email}}</small>
+</p>
+{{end}}
+
 <small>App: {{.ClientName}} ({{.ClientID}})</small>
 
 <p>This app requests access to:</p>
