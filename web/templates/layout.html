@@ -1,0 +1,23 @@
+{{define "layout"}}
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Tripzy OAuth</title>
+    <style>
+        body{font-family:system-ui;margin:40px;max-width:520px}
+        .card{border:1px solid #ddd;padding:16px;border-radius:12px}
+        label{display:block;margin-top:10px}
+        input{width:100%;padding:10px;margin-top:6px}
+        button{margin-top:14px;padding:10px 14px}
+        .err{color:#b00020;margin-top:12px}
+        small{color:#666}
+    </style>
+</head>
+<body>
+<div class="card">
+    {{template "content" .}}
+</div>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,18 @@
+{{define "content"}}
+<h2>Consent</h2>
+<small>App: {{.ClientName}} ({{.ClientID}})</small>
+
+<p>This app requests access to:</p>
+<ul>
+    {{range .RequestedScope}}
+    <li>{{.}}</li>
+    {{end}}
+</ul>
+
+<form method="post" action="/consent?consent_challenge={{.ConsentChallenge}}">
+    <input type="hidden" name="csrf" value="{{.CSRF}}"/>
+    <button type="submit">Approve</button>
+</form>
+{{end}}
+
+{{template "layout" .}}

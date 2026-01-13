@@ -1,0 +1,66 @@
+sequenceDiagram
+    autonumber
+
+    participant Client
+    participant HydraPublic as Hydra Public
+    participant BridgeUI as Hydra Bridge UI
+    participant Plugin as Auth Plugin
+    participant LoginAPI as Existing Login API
+    participant ExternalIdP as External IdP
+    participant HydraAdmin as Hydra Admin
+
+    Client->>HydraPublic: GET /oauth2/auth
+    HydraPublic-->>Client: Redirect to BridgeUI with login_challenge
+    Client->>BridgeUI: GET /login with login_challenge
+
+    BridgeUI->>HydraAdmin: Get login request
+    HydraAdmin-->>BridgeUI: Login request details client_id requested scopes
+
+    BridgeUI->>Plugin: Select plugin by provider or client_id
+
+    alt Internal login plugin with UI form
+        BridgeUI-->>Client: Render login page
+        Client->>BridgeUI: POST /login with username and password
+        BridgeUI->>Plugin: Authenticate with credentials
+        Plugin->>LoginAPI: Verify username and password
+        LoginAPI-->>Plugin: Auth success user_id
+        Plugin-->>BridgeUI: Auth result subject user_id claims
+    else External auth plugin with redirect
+        BridgeUI-->>Client: Render login page with SSO button
+        Client->>BridgeUI: GET /login/start external
+        BridgeUI->>Plugin: Start external login
+        Plugin-->>Client: Redirect to ExternalIdP
+        Client->>ExternalIdP: Login
+        ExternalIdP-->>Client: Redirect back to BridgeUI callback
+        Client->>BridgeUI: GET /callback
+        BridgeUI->>Plugin: Exchange code and fetch user info
+        Plugin->>ExternalIdP: Token and userinfo
+        ExternalIdP-->>Plugin: User info external_id
+        Plugin-->>BridgeUI: Auth result subject mapped_id claims
+    end
+
+    BridgeUI->>HydraAdmin: Accept login request with subject and context
+    HydraAdmin-->>BridgeUI: Redirect URL
+    BridgeUI-->>Client: Redirect to HydraPublic
+
+    HydraPublic-->>Client: Redirect to BridgeUI with consent_challenge
+    Client->>BridgeUI: GET /consent with consent_challenge
+
+    BridgeUI->>HydraAdmin: Get consent request
+    HydraAdmin-->>BridgeUI: Consent request details requested scopes client_id
+
+    alt Auto approve consent policy
+        BridgeUI->>HydraAdmin: Accept consent request grant scopes set claims
+        HydraAdmin-->>BridgeUI: Redirect URL
+        BridgeUI-->>Client: Redirect to HydraPublic
+    else Consent UI page
+        BridgeUI-->>Client: Render consent page
+        Client->>BridgeUI: POST /consent approve
+        BridgeUI->>HydraAdmin: Accept consent request grant scopes set claims
+        HydraAdmin-->>BridgeUI: Redirect URL
+        BridgeUI-->>Client: Redirect to HydraPublic
+    end
+
+    HydraPublic-->>Client: Authorization code
+    Client->>HydraPublic: POST /oauth2/token with code and PKCE
+    HydraPublic-->>Client: Access token ID token Refresh token

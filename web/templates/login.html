@@ -1,0 +1,21 @@
+{{define "content"}}
+<h2>Sign in</h2>
+<small>Client: {{.ClientName}} ({{.ClientID}})</small>
+
+{{if .Error}}<div class="err">{{.Error}}</div>{{end}}
+
+<form method="post" action="/login?login_challenge={{.LoginChallenge}}">
+    <input type="hidden" name="csrf" value="{{.CSRF}}"/>
+    <input type="hidden" name="provider" value="{{.Provider}}"/>
+
+    <label>Username</label>
+    <input name="username" autocomplete="username"/>
+
+    <label>Password</label>
+    <input name="password" type="password" autocomplete="current-password"/>
+
+    <button type="submit">Continue</button>
+</form>
+{{end}}
+
+{{template "layout" .}}

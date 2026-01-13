@@ -1,0 +1,88 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hydra
+      POSTGRES_PASSWORD: hydra
+      POSTGRES_DB: hydra
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U hydra -d hydra" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  hydra-migrate:
+    image: oryd/hydra:v25
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DSN: postgres://hydra:hydra@postgres:5432/hydra?sslmode=disable
+    command: migrate sql -e --yes
+    restart: "no"
+
+  hydra:
+    image: oryd/hydra:v25
+    depends_on:
+      hydra-migrate:
+        condition: service_completed_successfully
+    environment:
+      DSN: postgres://hydra:hydra@postgres:5432/hydra?sslmode=disable
+
+      # Public issuer URL (what clients see)
+      URLS_SELF_ISSUER: http://localhost:4444
+
+      # Hydra public/admin URLs (internal)
+      URLS_SELF_PUBLIC: http://hydra:4444
+      URLS_SELF_ADMIN: http://hydra:4445
+
+      # Where Hydra redirects the browser for login/consent
+      URLS_LOGIN: http://localhost:8081/login
+      URLS_CONSENT: http://localhost:8081/consent
+
+      # Dev secrets (change in real env)
+      SECRETS_SYSTEM: you_really_should_change_this_secret
+      OIDC_SUBJECT_IDENTIFIERS_ENABLED: public,pairwise
+      OIDC_SUBJECT_IDENTIFIERS_PAIRWISE_SALT: you_really_should_change_this_salt
+
+      # Useful in dev
+      LOG_LEVEL: debug
+    command: serve all --dev
+    ports:
+      - "4444:4444" # public
+      - "4445:4445" # admin (DO NOT expose in prod)
+    restart: unless-stopped
+
+  # Example: your existing login API (DEMO STUB)
+  # Replace this with your real login server in real deployment.
+  login-api:
+    image: golang:1.25
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: [ "go", "run", "./mock-login-api" ]
+    ports:
+      - "8090:8090"
+
+  bridge:
+    image: golang:1.25
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      BRIDGE_ADDR: :8081
+      HYDRA_ADMIN_URL: http://hydra:4445
+      HYDRA_PUBLIC_URL: http://localhost:4444
+
+      # plugin internal -> calls your existing login api
+      LOGIN_API_URL: http://login-api:8090
+      COOKIE_AUTH_KEY: change-me-super-secret-32bytes-min
+      COOKIE_ENC_KEY: change-me-super-secret-32bytes-min
+    command: [ "go", "run", "./cmd/server" ]
+    ports:
+      - "8081:8081"
+    depends_on:
+      - hydra
+      - login-api
