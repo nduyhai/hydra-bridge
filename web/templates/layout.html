@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tripzy OAuth</title>
+    <title>Tripzy SSO</title>
     <style>
         * {
             margin: 0;
@@ -17,123 +17,195 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #7e8ba3 100%);
             padding: 20px;
         }
-        .card {
+        .sso-container {
             background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            max-width: 420px;
+            padding: 45px;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            max-width: 440px;
             width: 100%;
+            position: relative;
+        }
+        .sso-header {
+            text-align: center;
+            margin-bottom: 35px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #e8eef5;
+        }
+        .sso-logo {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            border-radius: 10px;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .sso-title {
+            font-size: 14px;
+            color: #1e3c72;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .sso-subtitle {
+            font-size: 12px;
+            color: #7e8ba3;
         }
         h2 {
-            color: #333;
+            color: #1a1a1a;
             margin-bottom: 10px;
-            text-align: center;
-            font-size: 24px;
+            font-size: 26px;
+            font-weight: 600;
         }
         .client-info {
-            text-align: center;
-            color: #666;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            border-left: 3px solid #2a5298;
+        }
+        .client-info small {
+            color: #475569;
+            font-size: 13px;
+            display: block;
+        }
+        .client-info strong {
+            color: #1e3c72;
             font-size: 14px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #eee;
         }
         .user-info {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
+            background: #f0f4f8;
+            padding: 18px;
+            border-radius: 8px;
             margin-bottom: 25px;
             text-align: center;
+            border: 1px solid #d1dce5;
         }
         .user-info strong {
-            color: #333;
+            color: #1e3c72;
             display: block;
-            margin-bottom: 5px;
-            font-size: 16px;
+            margin-bottom: 6px;
+            font-size: 17px;
+            font-weight: 600;
         }
         .user-info .muted {
-            color: #666;
+            color: #64748b;
             font-size: 14px;
         }
         label {
             display: block;
-            margin-top: 15px;
-            margin-bottom: 5px;
-            color: #333;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            color: #334155;
             font-weight: 500;
             font-size: 14px;
         }
         input[type="text"],
         input[type="password"] {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
+            padding: 13px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #fafbfc;
         }
         input[type="text"]:focus,
         input[type="password"]:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #2a5298;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
         }
         button {
             width: 100%;
-            margin-top: 25px;
-            padding: 12px;
-            background: #667eea;
+            margin-top: 28px;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
         }
         button:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(30, 60, 114, 0.4);
         }
         button:active {
-            transform: translateY(1px);
+            transform: translateY(0);
         }
         .err {
-            background: #fee;
-            color: #c00;
-            padding: 12px;
-            border-radius: 5px;
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 14px 16px;
+            border-radius: 6px;
             margin-bottom: 20px;
             font-size: 14px;
-            border-left: 4px solid #c00;
+            border-left: 4px solid #dc2626;
+            line-height: 1.5;
         }
         .consent-info {
-            background: #f0f4ff;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
+            background: #eff6ff;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 4px solid #2a5298;
         }
         .consent-info p {
             margin: 0;
-            color: #333;
+            color: #334155;
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.7;
+        }
+        .consent-info strong {
+            color: #1e3c72;
         }
         small {
-            color: #666;
+            color: #64748b;
         }
         .muted {
-            color: #666;
+            color: #64748b;
+        }
+        .security-badge {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e8eef5;
+        }
+        .security-badge small {
+            color: #94a3b8;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
     </style>
 </head>
 <body>
-<div class="card">
+<div class="sso-container">
+    <div class="sso-header">
+        <div class="sso-logo">T</div>
+        <div class="sso-title">Tripzy SSO</div>
+        <div class="sso-subtitle">Single Sign-On Portal</div>
+    </div>
     {{template "content" .}}
+    <div class="security-badge">
+        <small>🔒 Secure Authentication</small>
+    </div>
 </div>
 </body>
 </html>

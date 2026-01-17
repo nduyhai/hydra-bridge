@@ -1,5 +1,5 @@
 {{define "content"}}
-<h2>Grant Access</h2>
+<h2>Authorization Request</h2>
 
 {{if .Name}}
 <div class="user-info">
@@ -10,15 +10,17 @@
 
 <div class="consent-info">
     <p>
-        <strong>{{.ClientName}}</strong> is requesting access to your account.
-        Click "Allow" to grant permission.
+        <strong>{{.ClientName}}</strong> is requesting permission to access your Tripzy account.
+    </p>
+    <p style="margin-top: 12px; font-size: 13px; color: #64748b;">
+        By clicking "Authorize", you allow this application to access your profile information.
     </p>
 </div>
 
 <form method="post" action="/consent">
     <input type="hidden" name="consent_challenge" value="{{.ConsentChallenge}}">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <button type="submit">Allow Access</button>
+    <button type="submit">Authorize Application</button>
 </form>
 {{end}}
 
