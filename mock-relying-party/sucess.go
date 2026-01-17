@@ -11,7 +11,7 @@ const successTemplate = `
     <title>Login Successful</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 40px; }
-        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; }
+        pre { background: #f4f4f4; padding: 10px; border-radius: 4px; overflow-x: auto; }
         button { 
             background: #007bff; 
             color: white; 
@@ -20,10 +20,14 @@ const successTemplate = `
             border-radius: 4px; 
             cursor: pointer;
             font-size: 16px;
+            margin-right: 10px;
         }
         button:hover { background: #0056b3; }
         button:disabled { background: #6c757d; cursor: not-allowed; }
+        .success-btn { background: #28a745; }
+        .success-btn:hover { background: #218838; }
         #result { margin-top: 20px; }
+        #introspect-result { margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -35,10 +39,13 @@ const successTemplate = `
     <button id="exchangeBtn" onclick="exchangeToken()">Exchange Token</button>
     
     <div id="result"></div>
+    <div id="introspect-result"></div>
 
     <p>This page is for MVP/demo only.</p>
 
     <script>
+        let accessToken = null;
+
         async function exchangeToken() {
             const code = '{{.Code}}';
             const resultDiv = document.getElementById('result');
@@ -47,6 +54,8 @@ const successTemplate = `
             btn.disabled = true;
             resultDiv.innerHTML = '<p>Exchanging token...</p>';
 
+            const currentURL = window.location.origin + window.location.pathname;
+
             try {
                 const response = await fetch('/exchange-token', {
                     method: 'POST',
@@ -54,15 +63,18 @@ const successTemplate = `
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
                     body: new URLSearchParams({
-                        'code': code
+                        'code': code,
+                        'redirect_uri': currentURL
                     })
                 });
 
                 const data = await response.json();
                 
                 if (response.ok) {
+                    accessToken = data.access_token;
                     resultDiv.innerHTML = '<h3>Token Exchange Successful!</h3><pre>' + 
-                        JSON.stringify(data, null, 2) + '</pre>';
+                        JSON.stringify(data, null, 2) + '</pre>' +
+                        '<button class="success-btn" onclick="introspectToken()">Introspect Token</button>';
                 } else {
                     resultDiv.innerHTML = '<h3 style="color: red;">Error:</h3><pre>' + 
                         JSON.stringify(data, null, 2) + '</pre>';
@@ -72,6 +84,41 @@ const successTemplate = `
                 resultDiv.innerHTML = '<h3 style="color: red;">Error:</h3><p>' + 
                     error.message + '</p>';
                 btn.disabled = false;
+            }
+        }
+
+        async function introspectToken() {
+            if (!accessToken) {
+                alert('No access token available');
+                return;
+            }
+
+            const introspectDiv = document.getElementById('introspect-result');
+            introspectDiv.innerHTML = '<p>Introspecting token...</p>';
+
+            try {
+                const response = await fetch('/introspect-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'token': accessToken
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    introspectDiv.innerHTML = '<h3>Token Introspection Result:</h3><pre>' + 
+                        JSON.stringify(data, null, 2) + '</pre>';
+                } else {
+                    introspectDiv.innerHTML = '<h3 style="color: red;">Error:</h3><pre>' + 
+                        JSON.stringify(data, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                introspectDiv.innerHTML = '<h3 style="color: red;">Error:</h3><p>' + 
+                    error.message + '</p>';
             }
         }
     </script>

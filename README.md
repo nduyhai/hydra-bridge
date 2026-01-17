@@ -31,42 +31,62 @@ A GitHub Hydra Brid repository for bootstrapping a new OAuth2.
 
 ```mermaid
 sequenceDiagram
-    autonumber
-    participant Client
-    participant hydra as hydra
-    participant bridge as bridge
-    participant login_api as login-api (legacy)
-    participant postgres as postgres
-    Note over hydra, postgres: hydra uses postgres for storage
-    Client ->> hydra: GET /oauth2/auth
-    hydra -->> Client: Set ory_hydra_login_csrf and ory_hydra_session cookies
-    hydra -->> Client: Redirect to bridge /login with login_challenge
-    Client ->> bridge: GET /login with login_challenge
-    bridge ->> hydra: GET Admin login request by login_challenge
-    hydra -->> bridge: Login request details client_id
-    bridge -->> Client: Render login page
-    Client ->> bridge: POST /login username password csrf
-    bridge ->> login_api: POST /login verify credentials
-    login_api -->> bridge: Auth success user_id name email
-    bridge -->> Client: Set cookie __bridge_user with claims short ttl
-    bridge ->> hydra: PUT Admin accept login subject user_id context claims
-    hydra -->> bridge: redirect_to
-    bridge -->> Client: Redirect to hydra
-    hydra -->> Client: Set ory_hydra_consent_csrf cookie
-    hydra -->> Client: Redirect to bridge /consent with consent_challenge
-    Client ->> bridge: GET /consent with consent_challenge
-    bridge ->> hydra: GET Admin consent request by consent_challenge
-    hydra -->> bridge: Consent request requested scopes client_id
-    bridge -->> Client: Read __bridge_user and render consent page with name email
-    Client ->> bridge: POST /consent approve csrf
-    bridge ->> hydra: PUT Admin accept consent grant scopes
-    Note over bridge, hydra: Inject claims into id_token and access_token via session fields
-    hydra -->> bridge: redirect_to
-    bridge -->> Client: Delete __bridge_user and redirect to hydra
-    hydra -->> Client: Redirect to redirect_uri with authorization code
-    Client ->> hydra: POST /oauth2/token with code
-    hydra -->> Client: access_token id_token refresh_token
+  autonumber
+  participant User as User (Browser)
+  participant RP as Relying Party<br/>:8091
+  participant Hydra as Hydra<br/>:4444 (public)<br/>:4445 (admin)
+  participant Bridge as Bridge<br/>:8081
+  participant LoginAPI as Login API<br/>:8090
+  participant DB as PostgreSQL<br/>:5432
 
+  Note over Hydra,DB: Hydra uses PostgreSQL for storage
+
+  User->>RP: Visit app and click "Login"
+  RP->>Hydra: GET /oauth2/auth<br/>(redirect to authorization endpoint)
+  Hydra-->>User: Set ory_hydra_login_csrf and<br/>ory_hydra_session cookies
+  Hydra-->>User: Redirect to Bridge /login<br/>with login_challenge
+
+  User->>Bridge: GET /login with login_challenge
+  Bridge->>Hydra: GET Admin :4445<br/>login request by login_challenge
+  Hydra-->>Bridge: Login request details (client_id)
+  Bridge-->>User: Render login page
+
+  User->>Bridge: POST /login<br/>(username, password, csrf)
+  Bridge->>LoginAPI: POST :8090/login<br/>verify credentials
+  LoginAPI-->>Bridge: Auth success<br/>(user_id, name, email)
+  Bridge-->>User: Set cookie __bridge_user<br/>with claims (short TTL)
+  Bridge->>Hydra: PUT Admin :4445<br/>accept login (subject, user_id, context claims)
+  Hydra-->>Bridge: redirect_to
+  Bridge-->>User: Redirect to Hydra
+
+  Hydra-->>User: Set ory_hydra_consent_csrf cookie
+  Hydra-->>User: Redirect to Bridge /consent<br/>with consent_challenge
+
+  User->>Bridge: GET /consent with consent_challenge
+  Bridge->>Hydra: GET Admin :4445<br/>consent request by consent_challenge
+  Hydra-->>Bridge: Consent request<br/>(requested scopes, client_id)
+  Bridge-->>User: Read __bridge_user and render<br/>consent page (name, email)
+
+  User->>Bridge: POST /consent approve (csrf)
+  Bridge->>Hydra: PUT Admin :4445<br/>accept consent (grant scopes)
+  Note over Bridge,Hydra: Inject claims into id_token and<br/>access_token via session fields
+  Hydra-->>Bridge: redirect_to
+  Bridge-->>User: Delete __bridge_user<br/>and redirect to Hydra
+
+  Hydra-->>User: Redirect to RP :8091/success<br/>with authorization code
+
+  User->>RP: GET :8091/success<br/>with code and state
+  RP-->>User: Render success page<br/>with "Exchange Token" button
+
+  User->>RP: Click "Exchange Token"
+  RP->>Hydra: POST :4444/oauth2/token<br/>with code (via host.docker.internal)
+  Hydra-->>RP: access_token, id_token, refresh_token
+  RP-->>User: Display tokens<br/>with "Introspect Token" button
+
+  User->>RP: Click "Introspect Token"
+  RP->>Hydra: POST :4445/oauth2/introspect<br/>with access_token (via host.docker.internal)
+  Hydra-->>RP: Token introspection result<br/>(active, claims, expiry)
+  RP-->>User: Display introspection result
 
 ```
 

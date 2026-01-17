@@ -30,6 +30,7 @@ func main() {
 	http.HandleFunc("/", handleLogin)
 	http.HandleFunc("/success", handleSuccess)
 	http.HandleFunc("/exchange-token", handleTokenExchange)
+	http.HandleFunc("/introspect-token", handleIntrospectToken)
 
 	fmt.Println("Server starting on http://localhost:8091")
 	log.Fatal(http.ListenAndServe(":8091", nil))
