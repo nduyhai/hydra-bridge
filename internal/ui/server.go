@@ -51,7 +51,6 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("/login", s.handleLogin)
 	mux.HandleFunc("/consent", s.handleConsent)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(200) })
-	mux.HandleFunc("/success", s.handleSuccess)
 	return mux
 }
 

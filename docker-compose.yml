@@ -64,6 +64,15 @@ services:
     command: [ "go", "run", "./mock-login-api" ]
     ports:
       - "8090:8090"
+  # Example: your new relying party
+  relying-party:
+    image: golang:1.25
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: [ "go", "run", "./mock-relying-party" ]
+    ports:
+      - "8091:8091"
 
   bridge:
     image: golang:1.25

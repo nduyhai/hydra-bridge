@@ -90,7 +90,7 @@ curl -sS -i -X POST http://localhost:4445/clients \
     "grant_types": ["authorization_code","refresh_token"],
     "response_types": ["code"],
     "scope": "openid profile email offline_access",
-    "redirect_uris": ["http://localhost:8081/success"],
+    "redirect_uris": ["http://localhost:8091/success"],
     "token_endpoint_auth_method": "client_secret_basic"
   }'
 
@@ -111,26 +111,20 @@ curl -X POST http://localhost:8090/login \  -H "Content-Type: application/json" 
   -d '{"username":"hai","password":"123"}'
 ```
 
-## Browser Test Flow
+## Browser Flow
 
-```bash
-http://localhost:4444/oauth2/auth?
-response_type=code&
-client_id=demo-client&
-redirect_uri=http://localhost:8081/success&
-scope=openid%20profile%20email&
-state=mvpthelongnightstage
-
-```
-
-Then login with UI
+* Access UI http://localhost:8091
+* Click Login (The browser will redirect to SSO)
+* Then login with UI
 
 ```bash
 username: hai
 password: 123
 ```
 
-Click allow consent and get authorization code. Exchange token:
+* Click allow consent
+* The browser will redirect to a client http://localhost:8091, We will get authorization code. To exchange token:
+
 ```bash
 curl -X POST http://localhost:4444/oauth2/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
@@ -141,8 +135,7 @@ curl -X POST http://localhost:4444/oauth2/token \
 
 ```
 
-
-Introspect token
+* Introspect token
 
 ```bash
 curl -sS -X POST http://localhost:4445/oauth2/introspect \
