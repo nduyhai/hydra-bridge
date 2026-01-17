@@ -1,3 +1,5 @@
+{{template "layout" .}}
+
 {{define "content"}}
 <div class="app-header">
     <div class="app-logo">T</div>
@@ -24,6 +26,7 @@
 
     async function exchangeToken() {
         const code = '{{.Code}}';
+        const state = '{{.State}}';
         const resultDiv = document.getElementById('result');
         const btn = document.getElementById('exchangeBtn');
 
@@ -40,6 +43,7 @@
                 },
                 body: new URLSearchParams({
                     'code': code,
+                    'state': state,
                     'redirect_uri': currentURL
                 })
             });
@@ -107,5 +111,3 @@
     }
 </script>
 {{end}}
-
-{{template "layout" .}}

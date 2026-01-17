@@ -64,15 +64,39 @@ services:
     command: [ "go", "run", "./mock-login-api" ]
     ports:
       - "8090:8090"
-  # Example: your new relying party
-  relying-party:
+    # Confidential client (with secret) - for backend apps
+  relying-party-confidential:
     image: golang:1.25
     working_dir: /app
     volumes:
       - ./:/app
+    environment:
+      PORT: "8091"
+      CLIENT_ID: "demo-client"
+      CLIENT_SECRET: "demo-secret"
+      REDIRECT_URI: "http://localhost:8091/success"
+      USE_PKCE: "false"
     command: [ "go", "run", "./mock-relying-party" ]
     ports:
       - "8091:8091"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Public client (PKCE, no secret) - for SPAs/browsers
+  relying-party-public:
+    image: golang:1.25
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      PORT: "8092"
+      CLIENT_ID: "demo-client-public"
+      CLIENT_SECRET: ""
+      REDIRECT_URI: "http://localhost:8092/success"
+      USE_PKCE: "true"
+    command: [ "go", "run", "./mock-relying-party" ]
+    ports:
+      - "8092:8092"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
