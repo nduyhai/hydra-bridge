@@ -1,17 +1,25 @@
 {{define "content"}}
-<h2>Consent</h2>
+<h2>Grant Access</h2>
 
 {{if .Name}}
-<p>
-    Signed in as <strong>{{.Name}}</strong><br/>
-    <small class="muted">{{.Email}}</small>
-</p>
+<div class="user-info">
+    <strong>{{.Name}}</strong>
+    <span class="muted">{{.Email}}</span>
+</div>
 {{end}}
+
+<div class="consent-info">
+    <p>
+        <strong>{{.ClientName}}</strong> is requesting access to your account.
+        Click "Allow" to grant permission.
+    </p>
+</div>
 
 <form method="post" action="/consent">
     <input type="hidden" name="consent_challenge" value="{{.ConsentChallenge}}">
     <input type="hidden" name="csrf" value="{{.CSRF}}">
-    <button type="submit">Allow</button>
+    <button type="submit">Allow Access</button>
 </form>
-
 {{end}}
+
+{{template "layout" .}}

@@ -1,18 +1,35 @@
 {{define "content"}}
-<h2>Sign in</h2>
-<small>Client: {{.ClientName}} ({{.ClientID}})</small>
+<h2>Sign in to Tripzy</h2>
+<div class="client-info">
+    <small>{{.ClientName}}</small>
+</div>
 
-{{if .Error}}<div class="err">{{.Error}}</div>{{end}}
+{{if .Error}}
+<div class="err">{{.Error}}</div>
+{{end}}
 
 <form method="post" action="/login?login_challenge={{.LoginChallenge}}">
     <input type="hidden" name="csrf" value="{{.CSRF}}"/>
     <input type="hidden" name="provider" value="{{.Provider}}"/>
 
-    <label>Username</label>
-    <input name="username" autocomplete="username"/>
+    <label for="username">Username</label>
+    <input
+            id="username"
+            name="username"
+            type="text"
+            autocomplete="username"
+            autofocus
+            required
+    />
 
-    <label>Password</label>
-    <input name="password" type="password" autocomplete="current-password"/>
+    <label for="password">Password</label>
+    <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+    />
 
     <button type="submit">Continue</button>
 </form>
