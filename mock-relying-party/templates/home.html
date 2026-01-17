@@ -1,0 +1,16 @@
+{{define "content"}}
+<div class="app-header">
+    <div class="app-logo">T</div>
+    <h1>Welcome to Tripzy</h1>
+</div>
+
+<div class="button-group">
+    <button onclick="window.location.href='{{.LoginURL}}'">
+        🔐 Login with SSO
+    </button>
+</div>
+
+<p class="demo-note">Click login to authenticate via Tripzy SSO</p>
+{{end}}
+
+{{template "layout" .}}

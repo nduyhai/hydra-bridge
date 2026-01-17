@@ -1,0 +1,111 @@
+{{define "content"}}
+<div class="app-header">
+    <div class="app-logo">T</div>
+    <h1>🎉 Login Successful!</h1>
+</div>
+
+<div class="info-label">State:</div>
+<pre>{{.State}}</pre>
+
+<div class="info-label">Authorization Code:</div>
+<pre>{{.Code}}</pre>
+
+<div class="button-group">
+    <button id="exchangeBtn" onclick="exchangeToken()">Exchange Token</button>
+</div>
+
+<div id="result"></div>
+<div id="introspect-result"></div>
+
+<p class="demo-note">This page is for MVP/demo purposes only.</p>
+
+<script>
+    let accessToken = null;
+
+    async function exchangeToken() {
+        const code = '{{.Code}}';
+        const resultDiv = document.getElementById('result');
+        const btn = document.getElementById('exchangeBtn');
+
+        btn.disabled = true;
+        resultDiv.innerHTML = '<p class="loading">⏳ Exchanging token...</p>';
+
+        const currentURL = window.location.origin + window.location.pathname;
+
+        try {
+            const response = await fetch('/exchange-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'code': code,
+                    'redirect_uri': currentURL
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                accessToken = data.access_token;
+                resultDiv.innerHTML =
+                    '<h2>✅ Token Exchange Successful!</h2>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>' +
+                    '<div class="button-group">' +
+                    '<button class="success-btn" onclick="introspectToken()">Introspect Token</button>' +
+                    '</div>';
+            } else {
+                resultDiv.innerHTML =
+                    '<h3 class="error">❌ Error</h3>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                btn.disabled = false;
+            }
+        } catch (error) {
+            resultDiv.innerHTML =
+                '<h3 class="error">❌ Error</h3>' +
+                '<p class="error">' + error.message + '</p>';
+            btn.disabled = false;
+        }
+    }
+
+    async function introspectToken() {
+        if (!accessToken) {
+            alert('No access token available');
+            return;
+        }
+
+        const introspectDiv = document.getElementById('introspect-result');
+        introspectDiv.innerHTML = '<p class="loading">⏳ Introspecting token...</p>';
+
+        try {
+            const response = await fetch('/introspect-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'token': accessToken
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                introspectDiv.innerHTML =
+                    '<h2>🔍 Token Introspection Result</h2>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            } else {
+                introspectDiv.innerHTML =
+                    '<h3 class="error">❌ Error</h3>' +
+                    '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+            }
+        } catch (error) {
+            introspectDiv.innerHTML =
+                '<h3 class="error">❌ Error</h3>' +
+                '<p class="error">' + error.message + '</p>';
+        }
+    }
+</script>
+{{end}}
+
+{{template "layout" .}}
