@@ -74,9 +74,6 @@ sequenceDiagram
 
 ```bash
 docker compose up -d
-
-#retart app 
-docker compose restart bridge
 ```
 
 Create a client (example):
@@ -131,7 +128,7 @@ curl -X POST http://localhost:4444/oauth2/token \
   -u demo-client:demo-secret \
   -d "grant_type=authorization_code" \
   -d "code=REPLACE_WITH_CODE" \
-  -d "redirect_uri=http://localhost:5555/callback"
+  -d "redirect_uri=http://localhost:8091/success"
 
 ```
 
@@ -143,4 +140,13 @@ curl -sS -X POST http://localhost:4445/oauth2/introspect \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "token=REPLACE_WITH_ACCESS_TOKEN" | jq
 
+```
+
+## Development
+
+### Restart each app
+
+```bash
+docker compose restart bridge
+docker compose restart relying-party
 ```
