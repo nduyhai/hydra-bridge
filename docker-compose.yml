@@ -114,6 +114,10 @@ services:
       LOGIN_API_URL: http://login-api:8090
       COOKIE_AUTH_KEY: change-me-super-secret-32bytes-min
       COOKIE_ENC_KEY: change-me-super-secret-32bytes-min
+      COOKIE_DOMAIN:
+      COOKIE_SECURE: false
+      COOKIE_SAMESITE: lax
+      SESSION_TTL_SECONDS: 604800
     command: [ "go", "run", "./cmd/server" ]
     ports:
       - "8081:8081"

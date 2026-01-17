@@ -93,7 +93,7 @@ func (s *Server) handleConsent(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Clean up cookie after consent is done
-		deleteCookie(w, userInfoCookie)
+		s.deleteCookie(w, userInfoCookie)
 
 		http.Redirect(w, r, redir.RedirectTo, http.StatusFound)
 

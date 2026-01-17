@@ -6,23 +6,56 @@ import (
 	"encoding/base64"
 	"html/template"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/nduyhai/hydra-bridge/internal/hydra"
 	"github.com/nduyhai/hydra-bridge/internal/plugins"
 )
 
-const userInfoCookie = "__bridge_user"
+const (
+	userInfoCookie       = "__bridge_user"    // short-lived claims for consent UI
+	bridgeSessionCookie  = "__bridge_session" // long-lived SSO session cookie
+	bridgeSessionTTLDays = 7                  // example only
+)
 
 type Config struct {
-	Addr         string
-	HydraAdmin   string
-	HydraPublic  string
-	LoginAPIURL  string
-	CookieAuth   string
-	CookieEnc    string
+	Addr        string
+	HydraAdmin  string
+	HydraPublic string
+	LoginAPIURL string
+
+	// Secrets
+	CookieAuth string // HMAC signing secret (tamper-proof cookies, CSRF token)
+	CookieEnc  string // (optional) encryption secret if you encrypt userInfo cookie
+
 	DefaultProv  string
 	TemplatesDir string
+
+	// Bridge session (SSO) cookie settings
+	SessionTTLSeconds int    // e.g. 604800 (7 days)
+	CookieDomain      string // "" = host-only, or ".tripzy.com"
+	CookieSecure      bool   // true in prod (https)
+	CookieSameSite    string // "lax" (default), "strict", "none"
+}
+
+func (c Config) SameSiteMode() http.SameSite {
+	switch strings.ToLower(strings.TrimSpace(c.CookieSameSite)) {
+	case "strict":
+		return http.SameSiteStrictMode
+	case "none":
+		// NOTE: SameSite=None requires Secure=true in modern browsers.
+		return http.SameSiteNoneMode
+	default:
+		return http.SameSiteLaxMode
+	}
+}
+
+func (c Config) SessionTTL() time.Duration {
+	if c.SessionTTLSeconds <= 0 {
+		return 7 * 24 * time.Hour
+	}
+	return time.Duration(c.SessionTTLSeconds) * time.Second
 }
 
 type Server struct {
@@ -63,22 +96,53 @@ func csrfToken(secret, challenge string) string {
 	return base64.RawURLEncoding.EncodeToString(h[:])
 }
 
-func setShortCookie(w http.ResponseWriter, name, value string, maxAgeSec int) {
+func (s *Server) setShortCookie(
+	w http.ResponseWriter,
+	name, value string,
+	maxAgeSec int,
+) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     name,
 		Value:    value,
 		Path:     "/",
+		Domain:   s.cfg.CookieDomain, // "" = host-only (good for localhost)
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   s.cfg.CookieSecure,   // true in prod
+		SameSite: s.cfg.SameSiteMode(), // Lax by default
 		MaxAge:   maxAgeSec,
+		Expires:  time.Now().Add(time.Duration(maxAgeSec) * time.Second),
 	})
 }
 
-func deleteCookie(w http.ResponseWriter, name string) {
+// setSessionCookie: for __bridge_session (SSO source of truth)
+func (s *Server) setSessionCookie(
+	w http.ResponseWriter,
+	name, value string,
+	ttl time.Duration,
+) {
 	http.SetCookie(w, &http.Cookie{
-		Name:   name,
-		Value:  "",
-		Path:   "/",
-		MaxAge: -1,
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		Domain:   s.cfg.CookieDomain,
+		HttpOnly: true,
+		Secure:   s.cfg.CookieSecure,
+		SameSite: s.cfg.SameSiteMode(),
+		MaxAge:   int(ttl.Seconds()),
+		Expires:  time.Now().Add(ttl),
+	})
+}
+
+func (s *Server) deleteCookie(w http.ResponseWriter, name string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     name,
+		Value:    "",
+		Path:     "/",
+		Domain:   s.cfg.CookieDomain,
+		HttpOnly: true,
+		Secure:   s.cfg.CookieSecure,
+		SameSite: s.cfg.SameSiteMode(),
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
 	})
 }
